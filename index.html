@@ -1,350 +1,1847 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Optimising Learned H_theta for Low Error Spatial Audio Rendering</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --bg: #f7f5f0;
-      --ink: #111111;
-      --soft: #222222;
-      --muted: #777777;
-      --accent: #1a56db;
-      --rule: #dddbd4;
-      --code-bg: #eceae4;
-      --sans: 'IBM Plex Sans', system-ui, sans-serif;
-      --mono: 'IBM Plex Mono', monospace;
-      --max: 740px;
-    }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    body {
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 17px;
-      line-height: 1.8;
-      padding: 0 24px;
-    }
+    <title>
+        Learning Personalized Head-Related Transfer Functions from Binaural Recordings
+    </title>
 
-    header {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 72px 0 40px;
-      border-bottom: 1px solid var(--rule);
-    }
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
 
-    h1 {
-      font-size: clamp(22px, 3.5vw, 32px);
-      font-weight: 600;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
-    }
+    <script
+        async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
 
-    nav {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 18px 0;
-      border-bottom: 1px solid var(--rule);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px 20px;
-    }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    nav a {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--accent);
-      text-decoration: none;
-    }
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
 
-    nav a:hover { text-decoration: underline; }
+    <style>
 
-    main {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 56px 0 100px;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    section { margin-bottom: 56px; }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 75px;
+        }
 
-    h2 {
-      font-family: var(--sans);
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--rule);
-    }
+        body {
+            margin: 0;
+            padding: 0;
 
-    h3 {
-      font-family: var(--sans);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--accent);
-      margin: 28px 0 10px;
-    }
+            background: #ffffff;
+            color: #333333;
 
-    p {
-      color: var(--soft);
-      margin-bottom: 14px;
-    }
+            font-family: "Inter", Arial, sans-serif;
 
-    p:last-child { margin-bottom: 0; }
+            font-size: 16px;
+            line-height: 1.65;
+        }
 
-    ul {
-      color: var(--soft);
-      padding-left: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+        /* =====================================================
+           MAIN PAGE
+        ====================================================== */
 
-    .eq {
-      display: block;
-      font-family: var(--mono);
-      font-size: 14px;
-      background: var(--code-bg);
-      padding: 12px 16px;
-      margin: 14px 0;
-      color: var(--ink);
-      overflow-x: auto;
-      white-space: pre;
-    }
+        .page {
+            width: 100%;
+            max-width: 1200px;
 
-    code {
-      font-family: var(--mono);
-      font-size: 14px;
-      background: var(--code-bg);
-      padding: 1px 5px;
-      color: var(--ink);
-    }
+            margin: 0 auto;
 
-    .io {
-      margin: 16px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+            padding: 0 50px 100px;
+        }
 
-    .io-row {
-      display: flex;
-      gap: 14px;
-      color: var(--soft);
-    }
+        /* =====================================================
+           HEADER
+        ====================================================== */
 
-    .io-label {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--ink);
-      font-weight: 500;
-      min-width: 60px;
-      flex-shrink: 0;
-      padding-top: 2px;
-    }
+        .header {
+            text-align: center;
 
-    .placeholder {
-      border: 1px dashed var(--rule);
-      padding: 48px 24px;
-      text-align: center;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 12px;
-    }
+            padding-top: 50px;
+            padding-bottom: 60px;
+        }
 
-    .fig-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
+        .title {
+            max-width: 1100px;
 
-    footer {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 28px 0 60px;
-      border-top: 1px solid var(--rule);
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-    }
+            margin: 0 auto;
 
-    @media (max-width: 540px) {
-      .fig-row { grid-template-columns: 1fr; }
-    }
-  </style>
+            font-size: 58px;
+            line-height: 1.12;
+
+            font-weight: 600;
+
+            letter-spacing: -2.2px;
+
+            color: #333333;
+        }
+
+        .subtitle {
+            margin-top: 25px;
+
+            font-size: 29px;
+
+            font-weight: 600;
+
+            color: #c94b4b;
+        }
+
+        .authors {
+            margin-top: 25px;
+
+            font-size: 18px;
+
+            color: #2874d0;
+        }
+
+        .affiliation {
+            margin-top: 10px;
+
+            font-size: 15px;
+
+            color: #444444;
+        }
+
+        .advisor {
+            margin-top: 6px;
+
+            font-size: 15px;
+
+            color: #555555;
+        }
+
+        /* =====================================================
+           NON-FUNCTIONAL HEADER BUTTONS
+        ====================================================== */
+
+        .buttons {
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            gap: 16px;
+
+            margin-top: 32px;
+        }
+
+        .button {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            min-width: 110px;
+
+            padding: 9px 23px;
+
+            border-radius: 30px;
+
+            background: #333333;
+            color: #ffffff;
+
+            font-size: 15px;
+            font-weight: 500;
+
+            cursor: default;
+            user-select: none;
+        }
+
+        /* =====================================================
+           STICKY SECTION MENU
+        ====================================================== */
+
+        .section-nav {
+            position: sticky;
+
+            top: 0;
+
+            z-index: 1000;
+
+            width: 100%;
+
+            background: rgba(255, 255, 255, 0.96);
+
+            border-bottom: 1px solid #e5e5e5;
+
+            backdrop-filter: blur(8px);
+
+            margin-bottom: 15px;
+        }
+
+        .section-nav-inner {
+            max-width: 1100px;
+
+            margin: 0 auto;
+
+            padding: 10px 20px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 7px;
+
+            overflow-x: auto;
+
+            white-space: nowrap;
+
+            scrollbar-width: none;
+        }
+
+        .section-nav-inner::-webkit-scrollbar {
+            display: none;
+        }
+
+        .section-nav a {
+            color: #555555;
+
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 500;
+
+            padding: 5px 9px;
+
+            border-radius: 5px;
+
+            transition:
+                color 0.15s ease,
+                background 0.15s ease;
+        }
+
+        .section-nav a:hover {
+            color: #222222;
+
+            background: #f2f2f2;
+        }
+
+        /* =====================================================
+           TL;DR
+        ====================================================== */
+
+        .tldr {
+            max-width: 1050px;
+
+            margin: 35px auto 0;
+
+            text-align: center;
+
+            font-size: 20px;
+
+            line-height: 1.6;
+
+            color: #444444;
+        }
+
+        .tldr-label {
+            font-weight: 500;
+        }
+
+        /* =====================================================
+           SECTIONS
+        ====================================================== */
+
+        section {
+            margin-top: 70px;
+        }
+
+        .section-title {
+            text-align: center;
+
+            margin: 0 0 27px;
+
+            font-size: 37px;
+
+            line-height: 1.25;
+
+            font-weight: 600;
+
+            color: #333333;
+        }
+
+        .subsection-title {
+            margin-top: 42px;
+            margin-bottom: 16px;
+
+            font-size: 27px;
+
+            line-height: 1.3;
+
+            font-weight: 600;
+
+            color: #333333;
+        }
+
+        .body {
+            max-width: 900px;
+
+            margin-left: auto;
+            margin-right: auto;
+
+            font-size: 17px;
+
+            line-height: 1.72;
+        }
+
+        .body p {
+            margin-top: 0;
+
+            margin-bottom: 17px;
+        }
+
+        /* =====================================================
+           LISTS
+        ====================================================== */
+
+        .body ul,
+        .body ol {
+            max-width: 900px;
+
+            margin: 15px auto 22px;
+
+            padding-left: 28px;
+        }
+
+        .body li {
+            margin-bottom: 9px;
+        }
+
+        /* =====================================================
+           EQUATIONS
+           
+           MUCH tighter than before.
+        ====================================================== */
+
+        .equation {
+            max-width: 900px;
+
+            margin: 13px auto;
+
+            padding: 2px 5px;
+
+            text-align: center;
+
+            overflow-x: auto;
+        }
+
+        .equation + .body {
+            margin-top: 0;
+        }
+
+        .body + .equation {
+            margin-top: 7px;
+        }
+
+        mjx-container {
+            max-width: 100%;
+
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* =====================================================
+           FIGURES
+        ====================================================== */
+
+        .figure {
+            width: 100%;
+
+            max-width: 1000px;
+
+            margin: 32px auto;
+        }
+
+        .figure img {
+            display: block;
+
+            width: 100%;
+            height: auto;
+
+            margin: 0 auto;
+        }
+
+        .caption {
+            margin-top: 9px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            color: #666666;
+        }
+
+        /* =====================================================
+           TECHNICAL CHALLENGES
+           
+           NO BOXES.
+        ====================================================== */
+
+        .challenge-list {
+            max-width: 900px;
+
+            margin: 0 auto;
+        }
+
+        .challenge {
+            padding: 17px 0 20px;
+
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .challenge:first-child {
+            padding-top: 0;
+        }
+
+        .challenge:last-child {
+            border-bottom: none;
+        }
+
+        .challenge-number {
+            margin-bottom: 3px;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color: #999999;
+
+            letter-spacing: 0.1em;
+        }
+
+        .challenge-title {
+            margin-bottom: 5px;
+
+            font-size: 20px;
+
+            font-weight: 600;
+
+            color: #333333;
+        }
+
+        .challenge-text {
+            font-size: 16px;
+
+            line-height: 1.65;
+
+            color: #555555;
+        }
+
+        /* =====================================================
+           ALGORITHM
+        ====================================================== */
+
+        .algorithm {
+            max-width: 900px;
+
+            margin: 25px auto;
+
+            padding: 23px 27px;
+
+            background: #f6f6f6;
+
+            border-radius: 6px;
+
+            overflow-x: auto;
+        }
+
+        .algorithm pre {
+            margin: 0;
+
+            font-family:
+                "SFMono-Regular",
+                Consolas,
+                "Liberation Mono",
+                monospace;
+
+            font-size: 14px;
+
+            line-height: 1.65;
+
+            white-space: pre-wrap;
+        }
+
+        /* =====================================================
+           METHOD SECTIONS
+        ====================================================== */
+
+        .method {
+            margin-top: 48px;
+        }
+
+        .method-label {
+            text-align: center;
+
+            margin-bottom: 4px;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color: #999999;
+
+            letter-spacing: 0.1em;
+
+            text-transform: uppercase;
+        }
+
+        /* =====================================================
+           EXPERIMENTAL DESIGN
+        ====================================================== */
+
+        .experiment-design {
+            max-width: 900px;
+
+            margin: 0 auto;
+        }
+
+        .experiment-design p {
+            margin-top: 0;
+
+            margin-bottom: 18px;
+
+            font-size: 17px;
+
+            line-height: 1.72;
+        }
+
+        .experiment-detail {
+            font-weight: 600;
+
+            color: #333333;
+        }
+
+        /* =====================================================
+           AUDIO DEMOS
+        ====================================================== */
+
+        .audio-grid {
+            max-width: 900px;
+
+            margin: 25px auto;
+        }
+
+        .audio-item {
+            margin-bottom: 24px;
+        }
+
+        .audio-title {
+            margin-bottom: 6px;
+
+            font-size: 16px;
+
+            font-weight: 600;
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        /* =====================================================
+           GALLERY
+        ====================================================== */
+
+        .gallery {
+            display: grid;
+
+            grid-template-columns: repeat(2, 1fr);
+
+            gap: 25px;
+
+            max-width: 1000px;
+
+            margin: 30px auto;
+        }
+
+        .gallery img {
+            display: block;
+
+            width: 100%;
+            height: auto;
+        }
+
+        /* =====================================================
+           REFERENCES
+        ====================================================== */
+
+        .references {
+            max-width: 900px;
+
+            margin: 0 auto;
+        }
+
+        .reference {
+            margin-bottom: 14px;
+
+            font-size: 15px;
+
+            line-height: 1.6;
+
+            color: #555555;
+        }
+
+        /* =====================================================
+           FOOTER
+        ====================================================== */
+
+        footer {
+            margin-top: 80px;
+
+            padding-top: 25px;
+
+            border-top: 1px solid #dddddd;
+
+            text-align: center;
+
+            font-size: 13px;
+
+            color: #888888;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ====================================================== */
+
+        @media (max-width: 850px) {
+
+            .page {
+                padding-left: 25px;
+                padding-right: 25px;
+            }
+
+            .title {
+                font-size: 43px;
+
+                letter-spacing: -1.5px;
+            }
+
+            .subtitle {
+                font-size: 25px;
+            }
+
+            .section-nav-inner {
+                justify-content: flex-start;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .header {
+                padding-top: 30px;
+            }
+
+            .title {
+                font-size: 35px;
+            }
+
+            .subtitle {
+                font-size: 22px;
+            }
+
+            .authors {
+                font-size: 15px;
+            }
+
+            .buttons {
+                flex-wrap: wrap;
+            }
+
+            .tldr {
+                font-size: 17px;
+            }
+
+            .section-title {
+                font-size: 30px;
+            }
+
+            .subsection-title {
+                font-size: 24px;
+            }
+
+            .body {
+                font-size: 16px;
+            }
+
+        }
+
+    </style>
+
 </head>
+
 <body>
 
-<header>
-  <h1>Optimising Learned H_theta for Low Error Spatial Audio Rendering</h1>
-</header>
+<div class="page">
 
+    <header class="header">
 
+        <h1 class="title">
+            Learning Personalized Head-Related Transfer Functions
+            from Binaural Recordings
+        </h1>
 
-<main>
+        <div class="subtitle">
+            HRTF &amp; Spatial Audio
+        </div>
 
-  <section id="abstract">
-    <h2>Abstract</h2>
-    <p>When sound reaches a listener, the shape and size of the head, ears, and facial structure modifies it differently for each ear. The brain uses this difference to determine the direction the sound came from. This work studies how to learn that modification, the Head-Related Transfer Function (HRTF) from recorded audio, and use it to make a listener perceive sound as arriving from a chosen direction. We present a data collection pipeline, two estimation methods (least squares and per-frequency convolution), and evaluation results across multiple listeners and angles.</p>
-  </section>
+        <div class="authors">
+            Ilina Mukherjee
+        </div>
 
-  <section id="intro">
-    <h2>Introduction</h2>
-    <p>Headphones present audio directly into each ear. This bypasses the natural filtering that happens when sound travels through space and around the head. As a result, music played over headphones tends to feel like it is inside the head rather than out in space. The goal of spatial audio is to simulate that natural filtering. If we can learn how a sound source at angle theta modifies the signal reaching each ear, we can recreate that effect artificially: play the original signal in one ear and the appropriately filtered version in the other. The listener's brain should then perceive the sound as coming from angle theta.</p>
-    <p>The key object we need to learn is the HRTF. Concretely, if x_L and x_R are the left and right ear recordings of a sound from angle theta, then the HRTF H_theta satisfies:</p>
-    <span class="eq">x_R = H_theta * x_L</span>
-    <p>Learning H_theta for each angle theta is the central problem of this project.</p>
-  </section>
-  
-  <section id="prior">
-    <h2>Prior Work</h2>
+        <div class="affiliation">
+            Student Researcher, SINRG, University of Illinois, Urbana-Champaign
+        </div>
 
-    <h3>1 HRTF Measurement and Modelling</h3>
-    <p>Gardner and Martin [1] measured head-related transfer functions using the KEMAR mannequin across azimuth and elevation, producing head-related impulse responses that capture direction-dependent spectral and temporal characteristics. Brown and Duda [2] built a structural model for binaural sound synthesis, representing interaural time differences, head shadowing, and pinna filtering. Cheng and Wakefield [3] described HRTFs in time, frequency, and spatial domains and discussed their use in binaural audio reproduction over headphones.</p>
+        <div class="advisor">
+            Advisor: Professor Romit Roy Choudhury
+        </div>
 
-    <h3>2 HRTF Databases and Standardization</h3>
-    <p>Gardner and Martin [1] also distributed head-related impulse responses from the KEMAR mannequin through the MIT Media Laboratory, which became a widely used baseline dataset. Algazi et al. [4] introduced the CIPIC database, providing measurements across a dense set of spatial directions with anthropometric data from subjects. Majdak et al. [5] describe the ARI database supporting research on spatial hearing. AES69 [6] defines the Spatially Oriented Format for Acoustics (SOFA), a standardized format for storing and exchanging HRTF data. Kulkarni and Colburn [7] studied how changes in spectral cues affect localization performance.</p>
+        <div class="buttons">
 
-    <h3>3 HRTF Personalization</h3>
-    <p>Zotkin et al. [8] selected HRTFs from a database using anthropometric similarity. Hu et al. [9] trained a neural network to estimate HRTFs from head and ear measurements. Jin et al. [10] interpolated HRTFs using principal component analysis, reconstructing responses for unmeasured directions. Meshram et al. [11] computed HRTFs from 3D head geometry using acoustic simulation. Lee and Kim [12] predicted HRTFs from ear images using deep learning.</p>
+            <span class="button">Project</span>
+            <span class="button">Paper</span>
+            <span class="button">Code</span>
+            <span class="button">Demos</span>
 
-    <h3>4 Low-Cost and Scalable Acquisition</h3>
-    <p>Yang and Roy Choudhury [13] estimated HRTFs using a smartphone and in-ear microphones without requiring a controlled acoustic environment. Jayaram et al. [14] studied HRTF estimation from binaural recordings in unconstrained settings.</p>
+        </div>
 
-    <h3>5 Machine Learning for HRTF</h3>
-    <p>Hu et al. [9] and Lee and Kim [12] used neural networks to predict HRTFs from physical measurements and ear images respectively. Jin et al. [10] used statistical modelling for spatial interpolation. Yao et al. [15] estimated HRTFs for arbitrary directions using learning-based approaches. Xu and Choudhury [16] applied spatial audio representations in learning models. Bruschi et al. [17] reviewed measurement-based, simulation-based, and data-driven HRTF generation methods.</p>
-  </section>
+        <div class="tldr">
 
-  <section id="goals">
-    <h2>Goals of the Present Work</h2>
-  </section>
+            <span class="tldr-label">(TL;DR)</span>
 
-  <section id="problem">
-    <h2>Problem Statement</h2>
-    <p>The problem is: given a mono audio signal, how do we process it so that when played over headphones, the listener perceives it as coming from a specific direction?</p>
-    <div class="io">
-      <div class="io-row">
-        <span class="io-label">Input</span>
-        <span>A mono audio signal S, and a target angle theta.</span>
-      </div>
-      <div class="io-row">
-        <span class="io-label">Output</span>
-        <span>A stereo audio signal where the left channel carries S and the right channel carries H_theta * S, such that the listener perceives the sound as arriving from angle theta.</span>
-      </div>
-    </div>
-  </section>
+            We learn directional acoustic transformations from
+            low-cost binaural recordings and use the resulting
+            transfer functions to synthesize spatialized audio
+            for a chosen direction.
 
-  <section id="applications">
-    <h2>Applications</h2>
-    <p>Spatial audio has practical value in several areas. In virtual reality and gaming, placing sounds at specific locations in a simulated environment increases immersion. Listeners could more accurately locate virtual sound sources when individualised HRTFs were used compared to generic ones. Game engines such as Unreal and Unity now include built-in spatial audio pipelines, and headset manufacturers like Valve and Meta have invested heavily in real-time HRTF rendering. In hearing aids, directional audio plays a practical role. Many hearing aid users struggle to identify where sounds come from, a problem known as spatial hearing loss.</p>
-  </section>
+        </div>
 
-  <section id="challenges">
-    <h2>Challenges</h2>
-    <ul>
-      <li>The HRTF is person-specific. The filtering caused by head size, head shape, ear shape, and shoulder geometry differs across individuals. An H_theta measured from one person will not generalise well to another.</li>
-      <li>Real audio like music or human voices contains multiple frequencies together. The HRTF behaves differently at each frequency: its effect at 500 Hz differs from its effect at 8 kHz. A single broadband estimate of H may not capture this variation accurately.</li>
-      <li>Data collection is also non-trivial. The microphones and sound source must remain fixed during recording, and any movement introduces measurement noise that corrupts the estimate of H.</li>
-      <li>The system must generalise: H is estimated from a training set of recordings and must then apply correctly to new audio it has never seen.</li>
-    </ul>
-  </section>
+    </header>
 
+    <nav class="section-nav">
 
-  <section id="methodology">
-    <h2>Experimental Methodology</h2>
+        <div class="section-nav-inner">
 
-    <h3>Hardware Setup</h3>
-    <p>We taped one omnidirectional lavalier microphone near each ear to approximate the input at each eardrum. Initial attempts using Bluetooth earbuds failed due to onboard noise cancellation processing the signal before it could be recorded. Low-cost Maono lavalier microphones were used instead as they capture the raw acoustic signal without any onboard processing.</p>
-    <p>A phone speaker was placed on a tripod at a fixed angle theta and distance of approximately 30 cm from the listener, aligned with ear level. The setup was kept fixed throughout each recording session.</p>
+            <a href="#abstract">Abstract</a>
 
-    <h3>Data Collection</h3>
-    <p>For the broadband method, we played multiple audio clips from the speaker at each angle and recorded the simultaneous left and right ear signals. Recordings were aligned in post-processing and exported as stereo waveforms using Audacity. We collected recordings at angles of 10, 30, 45, 60, 90, 120, 150, 180, 220, and 320 degrees around the listener.</p>
-    <p>For the per-frequency method, we played sinusoidal beeps from 100 Hz to 16 kHz in steps of 100 Hz, recording the left and right ear response to each tone individually.</p>
-  </section>
+            <a href="#problem">Problem</a>
 
-  <section id="technical">
-    <h2>Technical Approach</h2>
+            <a href="#applications">Applications</a>
 
-    <h3>HRTF Estimation using Least Squares</h3>
-    <p>We record a stereo signal with the source placed at angle theta. The left ear recording is x_L and the right ear recording is x_R. H_theta is the filter that satisfies:</p>
-    <span class="eq">x_R = H_theta * x_L</span>
-    <p>We want to find H_theta given x_L and x_R. In general, this equation has no exact solution. The recorded signals contain noise, and the system is overdetermined: there are more signal samples than filter coefficients. So instead of solving exactly, we find the H_theta that minimizes the squared error between x_R and H_theta · x_L.</p>
-    <p>This is the Least Squares problem. x_R may not lie in the column space of the system, so we find the closest point that does. That closest point is the projection of x_R onto the column space, and the solution H_theta that achieves it is the Least Squares solution.</p>
-    <p>To make this tractable for audio signals, we work in the frequency domain. The signal is split into short segments. For each segment i, we take the FFT of x_L and x_R:</p>
-    <span class="eq">X_L(f), X_R(f) = FFT(x_L_i), FFT(x_R_i)</span>
-    <p>The Least Squares estimate of H_theta at each frequency f is then accumulated across all segments:</p>
-    <span class="eq">H_theta(f) = Σ X_R(f) · conj(X_L(f)) / Σ |X_L(f)|²</span>
-    <p>This is the frequency-domain form of the normal equations. The numerator is the cross-spectrum between x_R and x_L, and the denominator is the power spectrum of x_L. Dividing them gives the best linear filter in the least squares sense. A small regularization term λ is added to the denominator to avoid division by near-zero values:</p>
-    <span class="eq">H_theta(f) = Σ X_R(f) · conj(X_L(f)) / (Σ |X_L(f)|² + λ)</span>
-    <p>We repeat this for each angle theta, producing one H_theta per direction.</p>
+            <a href="#challenges">Challenges</a>
 
-    <h3>Per-Frequency Convolution in the Time Domain</h3>
-    <p>Method 1 estimates a single H_theta across the full signal. This works, but a single filter may not capture how the HRTF behaves differently at each frequency. Method 2 addresses this by learning a separate filter H_f(t) for each frequency f.</p>
-    <p>A sequence of pure sine tones is played, one tone per frequency, stepping from 160 Hz to 16000 Hz in increments of 100 Hz. For each tone at frequency f, we extract the corresponding segment from the left and right ear recordings, giving x_{L,f}(t) and x_{R,f}(t). The filter H_f(t) is the time-domain filter such that:</p>
-    <span class="eq">x_{L,f}(t) * H_f(t) = x_{R,f}(t)</span>
-    <p>where * denotes convolution. We estimate H_f(t) using cross-correlation between x_{R,f}(t) and x_{L,f}(t). The peak of the cross-correlation captures the delay and shape of the filter at that frequency. A window around the peak is taken and normalized to give H_f(t).</p>
-    <p>To spatialize a music signal M(t), we isolate each frequency band M_f(t), convolve it with the corresponding H_f(t), and sum the outputs across all frequencies:</p>
-    <span class="eq">x_R(t) = Σ_f  M_f(t) * H_f(t)</span>
-    <p>This gives the right ear signal. The left channel carries M(t) directly. By learning a dedicated filter at each frequency, the method captures the directional filtering more precisely, which is expected to reduce perceptual error compared to Method 1.</p>
-  </section>
+            <a href="#approach">Approach</a>
 
-  <section id="results">
-    <h2>Results</h2>
-    <div class="fig-row">
-      <figure>
-		<img src="image(6).png" alt="Figure 1" style="width:100%; display:block;">
-		<figcaption style="font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 8px;">Figure 1</figcaption>
-	  </figure>
-	  <figure>
-		<img src="image(5).png" alt="Figure 1" style="width:100%; display:block;">
-		<figcaption style="font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 8px;">Figure </figcaption>
-	  </figure>
-    </div>
-    <div class="fig-row">
-      <div class="placeholder">Figure 3</div>
-      <div class="placeholder">Figure 4</div>
-    </div>
-  </section>
-  
-  <section id="demos">
-	<h2>Results</h2>
-  </section id="demos">
-	
+            <a href="#experiments">Experiments</a>
 
-  <section id="references">
-    <h2>References</h2>
-    <p style="font-family: var(--mono); font-size: 13px; line-height: 2; color: var(--soft);">
-      [1] W. G. Gardner and K. D. Martin, "HRTF measurements of a KEMAR dummy-head microphone," <em>J. Acoust. Soc. Am.</em>, 1995.<br>
-      [2] C. P. Brown and R. O. Duda, "A structural model for binaural sound synthesis," <em>IEEE Trans.</em>, 1998.<br>
-      [3] C. I. Cheng and G. H. Wakefield, "Introduction to head-related transfer functions," <em>JAES</em>, 2001.<br>
-      [4] V. R. Algazi et al., "The CIPIC HRTF database," <em>WASPAA</em>, 2001.<br>
-      [5] P. Majdak et al., "ARI HRTF database," 2013.<br>
-      [6] AES69, "Spatially Oriented Format for Acoustics (SOFA)."<br>
-      [7] A. Kulkarni and H. S. Colburn, "Role of spectral detail in sound localization," <em>Nature</em>, 1998.<br>
-      [8] D. Zotkin et al., "HRTF personalization using anthropometric measurements," <em>WASPAA</em>, 2003.<br>
-      [9] H. Hu et al., "HRTF personalization using neural networks," <em>Applied Acoustics</em>, 2008.<br>
-      [10] C. Jin et al., "Interpolating HRTFs using PCA," <em>IEEE Trans.</em>, 2007.<br>
-      [11] A. Meshram et al., "P-HRTF," <em>ISMAR</em>, 2014.<br>
-      [12] J. Lee and D. Kim, "Deep learning for HRTF estimation," <em>Applied Sciences</em>, 2018.<br>
-      [13] Z. Yang and R. R. Choudhury, "Personalizing HRTFs for Earables," 2021.<br>
-      [14] V. Jayaram et al., "HRTF estimation in the wild," 2023.<br>
-      [15] D. Yao et al., "HRTF individualization in arbitrary directions," 2022.<br>
-      [16] Z. Xu and R. R. Choudhury, "Learning spatial audio representations," 2022.<br>
-      [17] V. Bruschi et al., "Review of HRTF generation," 2024.
-    </p>
-  </section>
+            <a href="#related">Related Work</a>
 
-</main>
+            <a href="#gallery">Gallery</a>
 
-<footer>
-  Spatial Audio · 2025
-</footer>
+            <a href="#references">References</a>
+
+        </div>
+
+    </nav>
+
+    <section id="abstract">
+
+        <h2 class="section-title">
+            Abstract
+        </h2>
+
+        <div class="body">
+
+            <p>
+                The project started with a simple question: if sound is recorded
+                near both ears while a source is placed at a known angle, can the
+                relationship between the two recordings be learned and applied to
+                new audio?
+            </p>
+
+            <p>
+                The first recording attempt used Bluetooth earbuds, but the
+                approach failed because onboard noise cancellation processed the
+                signal before it could be recorded. I therefore switched to
+                inexpensive omnidirectional lavalier microphones taped near each
+                ear. A phone speaker was placed at controlled angles around the
+                listener, and the two ear signals were recorded simultaneously.
+            </p>
+
+            <p>
+                The first processing pipeline aligned the recordings, divided them
+                into short segments, and estimated a directional transfer function
+                in the frequency domain using regularized least squares. The
+                resulting transformation was then applied to new audio to generate
+                a binaural signal.
+            </p>
+
+            <p>
+                The first reconstruction produced a clear spatial effect, although
+                the perceived direction was initially flipped and later appeared
+                to have a small angular offset. This led to a broader set of
+                recordings and perception tests, including comparisons across
+                different audio clips and listeners. A second approach was then
+                developed in which individual frequency tones were recorded and
+                used to estimate a separate time-domain filter for each frequency.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section id="problem">
+
+        <h2 class="section-title">
+            1. Problem Statement
+        </h2>
+
+        <div class="body">
+
+            <p>
+                When the same sound reaches the two ears, the listener does not
+                receive identical signals. The head and ears modify the sound
+                differently depending on where the source is located, and the
+                resulting differences provide cues about its direction.
+            </p>
+
+            <p>
+                The goal of this project is to measure that left-right relationship
+                directly and estimate a directional transformation for a fixed
+                source angle \(\theta\). If \(x_L\) and \(x_R\) denote the two
+                recorded signals, the basic model is:
+            </p>
+
+            <div class="equation">
+                \[
+                    x_R(t) \approx H_\theta(t) * x_L(t)
+                \]
+            </div>
+
+            <p>
+                The project then asks whether an estimated \(H_\theta\) can be
+                applied to previously unseen audio so that a listener perceives
+                the sound as arriving from approximately the same direction.
+                Because the project is based on physical recordings rather than a
+                pre-existing HRTF database, the measurements are specific to the
+                recording setup and listener.
+            </p>
+
+            <div class="equation">
+                \[
+                    x_L(t) = S(t),
+                    \qquad
+                    x_R(t) = H_\theta(t) * S(t)
+                \]
+            </div>
+
+            <p>
+                The practical problem is therefore not only estimating the
+                transformation, but also determining whether the resulting
+                spatial cue is perceptually consistent with the physical source
+                angle.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section id="applications">
+
+        <h2 class="section-title">
+            2. Applications
+        </h2>
+
+        <div class="body">
+
+            <p>
+                The same left-right acoustic differences studied here are relevant
+                to systems that need to make headphone audio sound as though it
+                originates from a location in physical space.
+            </p>
+
+            <ul>
+
+                <li>
+                    <strong>Headphone spatialization:</strong>
+                    directional filters can transform ordinary audio into binaural
+                    audio associated with a chosen source direction.
+                </li>
+
+                <li>
+                    <strong>Virtual reality:</strong>
+                    spatial audio can associate sounds with locations inside a
+                    simulated environment.
+                </li>
+
+                <li>
+                    <strong>Gaming:</strong>
+                    directional cues can help communicate where an event is
+                    occurring around the listener.
+                </li>
+
+                <li>
+                    <strong>Low-cost HRTF measurement:</strong>
+                    inexpensive microphones provide a way to explore personalized
+                    directional responses without relying on a large measurement
+                    facility.
+                </li>
+
+            </ul>
+
+        </div>
+
+    </section>
+
+    <section id="challenges">
+
+        <h2 class="section-title">
+            3. Technical Challenges
+        </h2>
+
+        <div class="body">
+
+            <p>
+                Much of the project developed through problems encountered during
+                the experiments rather than from a fixed procedure decided in
+                advance.
+            </p>
+
+        </div>
+
+        <div class="challenge-list">
+
+            <div class="challenge">
+
+                <div class="challenge-number">
+                    CHALLENGE 01
+                </div>
+
+                <div class="challenge-title">
+                    The First Recording Setup Did Not Work
+                </div>
+
+                <div class="challenge-text">
+                    The initial plan used Bluetooth earbuds as the recording
+                    devices. In practice, their onboard noise cancellation altered
+                    the signal before it could be recorded. I therefore abandoned
+                    that setup and switched to inexpensive omnidirectional
+                    lavalier microphones positioned near the ears.
+                </div>
+
+            </div>
+
+            <div class="challenge">
+
+                <div class="challenge-number">
+                    CHALLENGE 02
+                </div>
+
+                <div class="challenge-title">
+                    Aligning the Two Ear Recordings
+                </div>
+
+                <div class="challenge-text">
+                    The left and right recordings had to be aligned before their
+                    differences could be interpreted as acoustic effects. The
+                    signals were segmented, aligned during post-processing, and
+                    exported as stereo waveforms before estimating the transfer
+                    function.
+                </div>
+
+            </div>
+
+            <div class="challenge">
+
+                <div class="challenge-number">
+                    CHALLENGE 03
+                </div>
+
+                <div class="challenge-title">
+                    Estimating a Stable Transfer Function
+                </div>
+
+                <div class="challenge-text">
+                    The relationship between the two recorded signals is not
+                    perfectly solvable because of noise and measurement variation.
+                    The first approach therefore used a regularized least-squares
+                    estimate in the frequency domain rather than a direct division
+                    at every frequency.
+                </div>
+
+            </div>
+
+            <div class="challenge">
+
+                <div class="challenge-number">
+                    CHALLENGE 04
+                </div>
+
+                <div class="challenge-title">
+                    Measuring Perceived Direction
+                </div>
+
+                <div class="challenge-text">
+                    A physically measured angle does not give a single exact
+                    perceptual answer. The first reconstructions produced a
+                    noticeable spatial effect, but the direction was initially
+                    flipped and later showed an approximately \(10^\circ \pm 5^\circ\)
+                    mismatch for most non-extreme cases. Front and back positions
+                    were also harder to distinguish perceptually, motivating
+                    repeated tests and comparisons across listeners.
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section id="approach">
+
+        <h2 class="section-title">
+            4. Technical Approach
+        </h2>
+
+        <div class="body">
+
+            <p>
+                The project began with a simple fixed-angle recording setup. Two
+                omnidirectional lavalier microphones were taped near the ears to
+                approximate ear-level input. A phone speaker was placed on a
+                tripod at a marked angle, roughly 30 cm from the listener and at
+                ear height. The position of the listener, speaker, and microphones
+                was kept fixed during each recording session.
+            </p>
+
+            <p>
+                The first successful recordings used broadband audio clips. The
+                microphones took about a week to arrive after the failed earbud
+                attempt, so the data collection was delayed slightly. The left
+                and right signals were then recorded simultaneously, aligned
+                during post-processing, and exported as stereo waveforms using
+                Audacity.
+            </p>
+
+        </div>
+
+        <div class="figure">
+
+            <img
+                src="assets/pipeline.png"
+                alt="Experimental setup and HRTF processing pipeline"
+            >
+
+            <div class="caption">
+                Experimental setup and processing pipeline.
+            </div>
+
+        </div>
+
+        <h3 class="subsection-title">
+            4.1 From the First Recording to a Working Pipeline
+        </h3>
+
+        <div class="body">
+
+            <p>
+                The first experiment was carried out at a source angle of
+                \(10^\circ\) to the right. After recording the two channels, I
+                aligned them and used short audio segments for frequency-domain
+                processing. The left signal was treated as the input and the
+                right signal as the target, giving the relationship
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                x_R(t) \approx H_\theta(t) * x_L(t)
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                The estimated transformation was then applied to new audio in
+                chunks. The original signal was kept as the left channel, while
+                the transformed signal was reconstructed as the right channel.
+                This produced the first working spatialized-audio pipeline.
+            </p>
+
+            <p>
+                The first playback did not perfectly match the physical setup:
+                the perceived direction appeared flipped. The issue was traced to
+                the reconstruction/channel labeling stage as a likely source of
+                error and became part of the debugging process rather than a
+                reason to discard the approach.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            4.2 Method 1: Frequency-Domain Regularized Least Squares
+        </h3>
+
+        <div class="body">
+
+            <p>
+                After the initial test, the recordings were divided into short
+                segments and transformed into the frequency domain. For segment
+                \(i\), the two recordings become
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                X_L^{(i)}(f) = \operatorname{FFT}(x_{L,i}),
+                \qquad
+                X_R^{(i)}(f) = \operatorname{FFT}(x_{R,i})
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                Rather than simply dividing \(X_R(f)\) by \(X_L(f)\), the transfer
+                function was estimated using a regularized least-squares
+                formulation. Across the available recordings or segments, the
+                estimate is
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                \hat{H}_\theta(f)
+                =
+                \frac{
+                    \sum_i X_R^{(i)}(f)\overline{X_L^{(i)}(f)}
+                }{
+                    \sum_i |X_L^{(i)}(f)|^2 + \lambda
+                }
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                The regularization term \(\lambda\) prevents the estimate from
+                becoming unstable when the left-channel input has very little
+                energy at a particular frequency.
+            </p>
+
+            <p>
+                I first tested the transformation using individual recordings.
+                I then began testing whether estimating an average transfer
+                function across multiple recordings would behave differently on
+                previously unseen audio. To reduce the chance of unconsciously
+                choosing a clip that sounded as expected, later perception tests
+                used randomly selected clips.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            4.3 Expanding the Angle Measurements
+        </h3>
+
+        <div class="body">
+
+            <p>
+                After the initial \(10^\circ\) experiment, I collected additional
+                measurements at \(0^\circ\), \(10^\circ\), \(30^\circ\), \(45^\circ\),
+                \(90^\circ\), \(100^\circ\), \(150^\circ\), \(180^\circ\),
+                \(220^\circ\), and \(270^\circ\). This made it possible to ask
+                whether the learned directional relationship continued to produce
+                a roughly corresponding percept when the source was moved around
+                the listener.
+            </p>
+
+            <p>
+                The front and back of the head were not always clearly
+                distinguishable by listening alone. For most non-extreme
+                measurements, the perceived direction was approximately
+                \(10^\circ \pm 5^\circ\) away from the physical source angle.
+                Perceived direction was estimated by having the listener point
+                toward the apparent source and measuring the resulting angle on a
+                marked plane. The first measurements used a measuring tape, scale,
+                protractor, and \(10^\circ\) markings, with the head kept level
+                with the measurement plane. A laser is being used for more precise
+                measurements going forward.
+            </p>
+
+            <p>
+                I also began comparing perceptions across listeners rather than
+                relying only on my own judgment. The primary experimenter is
+                referred to as <strong>Subject 1</strong>, while the second listener
+                is referred to as <strong>Subject 2</strong>. Because the two subjects
+                have different individual head and ear geometries, these comparisons
+                provide a simple test of how consistently the learned spatial cue
+                is perceived across subjects.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            4.4 Method 2: Per-Frequency Time-Domain Convolution
+        </h3>
+
+        <div class="body">
+
+            <p>
+                The next step came from asking whether the directional response
+                should be estimated separately at each frequency. Instead of
+                estimating one broadband transformation through the complex
+                frequency-domain least-squares calculation, I recorded individual
+                sinusoidal beeps from \(100\) Hz to \(16\) kHz in \(100\) Hz
+                increments.
+            </p>
+
+            <p>
+                For each frequency \(f\), the recorded left-ear and right-ear
+                signals are \(x_{L,f}(t)\) and \(x_{R,f}(t)\). I estimated a
+                time-domain filter \(H_f(t)\) satisfying
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                x_{L,f}(t) * H_f(t) \approx x_{R,f}(t)
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                The filter was estimated using cross-correlation. The correlation
+                peak provides the relative delay between the two signals, after
+                which a window around the peak is extracted and normalized.
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                R_{LR,f}(\tau)
+                =
+                \sum_t x_{R,f}(t)x_{L,f}(t+\tau)
+            \]
+        </div>
+
+        <div class="equation">
+            \[
+                \hat{\tau}_f
+                =
+                \operatorname*{arg\,max}_{\tau} R_{LR,f}(\tau)
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                For testing, a new music signal \(M(t)\) is decomposed into
+                frequency components \(M_f(t)\). Each component is convolved with
+                its corresponding learned filter, and the resulting signals are
+                summed to reconstruct the right-ear signal:
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                x_R(t)
+                =
+                \sum_f M_f(t) * H_f(t)
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                The original music signal is retained as the left channel:
+            </p>
+
+        </div>
+
+        <div class="equation">
+            \[
+                x_L(t)=M(t)
+            \]
+        </div>
+
+        <div class="body">
+
+            <p>
+                I am now reproducing the earlier perception experiments using
+                this per-frequency approach and comparing them with the original
+                least-squares method.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            4.5 Processing Procedure
+        </h3>
+
+        <div class="algorithm">
+
+<pre>
+FIRST SETUP:
+    Try Bluetooth earbuds
+    Observe that onboard noise cancellation alters the recording
+    Switch to omnidirectional lavalier microphones
+
+BROADBAND METHOD:
+    Place the speaker at a measured source angle
+    Record left and right ear signals simultaneously
+    Align the recordings
+    Segment the audio
+    Compute FFTs
+    Estimate H_theta(f) with regularized least squares
+    Apply the learned transformation to new audio
+    Reconstruct binaural playback
+
+EXPERIMENTAL FOLLOW-UP:
+    Collect additional source angles
+    Test unseen audio clips
+    Randomize clip selection during perception tests
+    Compare repeated self-perception
+    Compare perception across listeners
+    Measure physical versus perceived angle
+
+PER-FREQUENCY METHOD:
+    Record individual tones every 100 Hz from 100 Hz to 16 kHz
+    Estimate H_f(t) for each frequency
+    Use cross-correlation to locate the response
+    Extract and normalize the filter
+    Decompose new music into frequency components
+    Convolve each component with its corresponding H_f(t)
+    Sum the reconstructed components
+    Use the original signal as the left channel
+
+OUTPUT:
+    Stereo spatialized audio
+</pre>
+
+        </div>
+
+    </section>
+
+    <section id="experiments">
+
+        <h2 class="section-title">
+            5. Experiment Design, Results, and Demos
+        </h2>
+
+        <h3 class="subsection-title">
+            5.1 Experiment Design
+        </h3>
+
+        <div class="experiment-design">
+
+            <p>
+                The physical setup was kept fixed during each recording session.
+                Two omnidirectional lavalier microphones were taped near the ears.
+                A phone speaker was placed on a tripod at the selected source
+                angle, approximately one foot from the listener and at ear height.
+                The listener's seating position and head position were kept fixed
+                while recordings were collected.
+            </p>
+
+            <p>
+                The first broadband experiment used a source at \(10^\circ\).
+                After the initial pipeline worked, additional broadband data were
+                collected at \(0^\circ\), \(10^\circ\), \(30^\circ\), \(45^\circ\),
+                \(90^\circ\), \(100^\circ\), \(150^\circ\), \(180^\circ\),
+                \(220^\circ\), and \(270^\circ\).
+            </p>
+
+            <p>
+                For the least-squares experiments, several audio clips were
+                recorded at the same source conditions. The resulting transfer
+                functions were tested on randomly selected clips so that the
+                evaluation did not depend on choosing an audio clip that already
+                sounded like the expected direction. I compared individual-clip
+                estimates with an averaged estimate across multiple clips, and
+                also began testing whether another listener perceived the same
+                general direction.
+            </p>
+
+            <p>
+                For the per-frequency experiments, individual sinusoidal tones
+                were recorded from \(100\) Hz through \(16\) kHz in \(100\) Hz
+                increments. These measurements were collected for
+                \(0^\circ\), \(30^\circ\), \(60^\circ\), \(90^\circ\), \(120^\circ\),
+                \(180^\circ\), and \(220^\circ\), after which the resulting
+                \(H_f(t)\) filters were used to reconstruct the right channel of
+                a new music signal.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            5.2 Results and Observations
+        </h3>
+
+        <div class="figure">
+
+            <img
+                src="assets/graph-01-aoa-angular-mismatch.png"
+                alt="Angle of arrival versus angular mismatch across audio clips"
+            >
+
+            <div class="caption">
+                Experiment 1: AoA vs. Angular Mismatch
+            </div>
+
+        </div>
+
+        <div class="figure">
+
+            <img
+                src="assets/graph-02.png"
+                alt="Experiment 2 result graph"
+            >
+
+            <div class="caption">
+                Experiment 2: Replace with the exact graph title
+            </div>
+
+        </div>
+
+        <div class="figure">
+
+            <img
+                src="assets/graph-03.png"
+                alt="Experiment 3 result graph"
+            >
+
+            <div class="caption">
+                Experiment 3: Replace with the exact graph title
+            </div>
+
+        </div>
+
+        <div class="body">
+
+            <p>
+                The first successful reconstruction produced a spatial effect when
+                played over headphones, showing that the recorded left-right
+                relationship contained usable directional information. The first
+                playback appeared flipped relative to the physical setup, which
+                led to debugging of the reconstruction and channel labeling.
+            </p>
+
+            <p>
+                After expanding the measurements, the perceived direction was
+                generally close to the recorded direction for the less ambiguous
+                positions. My current measurement gives an angular mismatch of
+                approximately \(10^\circ \pm 5^\circ\), excluding the more difficult
+                extreme regions around the front and back. In particular, sounds
+                from the front and back were not always clearly distinguishable
+                by listening alone.
+            </p>
+
+            <p>
+                These observations motivated a more systematic perception test.
+                Rather than relying only on my own judgment, the same spatialized
+                clips can be evaluated by multiple listeners, with perceived
+                direction recorded by pointing and compared against the physical
+                source angle.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            5.3 Comparing the Two Methods
+        </h3>
+
+        <div class="body">
+
+            <p>
+                The current comparison is between the original frequency-domain
+                regularized least-squares method and the newer per-frequency
+                time-domain convolution method. The perception graph set includes
+                Subject 1–Subject 1 without averaging, Subject 1–Subject 1 with an
+                averaged transfer function, and Subject 1–Subject 2 without averaging,
+                with randomly selected clips used where applicable. The least-squares
+                pipeline uses broadband recordings and estimates a frequency-domain
+                transfer function from the recorded data. The newer method instead
+                measures individual frequencies directly and constructs a separate
+                time-domain response for each frequency.
+            </p>
+
+            <p>
+                The same style of perception graphs is being reproduced for the
+                per-frequency method so that the two approaches can be compared
+                using the same experimental procedure.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            5.4 Demos
+        </h3>
+
+        <div class="body">
+
+            <p>
+                The audio examples below are recordings generated during the
+                project. Additional TouchDesigner visualizations can be added here
+                to show the source angle, left-right recordings, learned transfer
+                functions, and frequency-by-frequency reconstruction without
+                presenting synthetic experimental results as measured data.
+            </p>
+
+        </div>
+
+                <div class="audio-grid">
+
+            <div class="audio-item">
+
+                <div class="audio-title">
+                    Original audio
+                </div>
+
+                <audio controls>
+                    <source
+                        src="audio/original.wav"
+                        type="audio/wav"
+                    >
+                </audio>
+
+            </div>
+
+            <div class="audio-item">
+
+                <div class="audio-title">
+                    Spatialized audio at 0°
+                </div>
+
+                <audio controls>
+                    <source
+                        src="audio/angle-0.wav"
+                        type="audio/wav"
+                    >
+                </audio>
+
+            </div>
+
+            <div class="audio-item">
+
+                <div class="audio-title">
+                    Spatialized audio at 90°
+                </div>
+
+                <audio controls>
+                    <source
+                        src="audio/angle-90.wav"
+                        type="audio/wav"
+                    >
+                </audio>
+
+            </div>
+
+            <div class="audio-item">
+
+                <div class="audio-title">
+                    Spatialized audio at 135°
+                </div>
+
+                <audio controls>
+                    <source
+                        src="audio/angle-135.wav"
+                        type="audio/wav"
+                    >
+                </audio>
+
+            </div>
+
+            <div class="audio-item">
+
+                <div class="audio-title">
+                    Spatialized audio at 220°
+                </div>
+
+                <audio controls>
+                    <source
+                        src="audio/angle-220.wav"
+                        type="audio/wav"
+                    >
+                </audio>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section id="related">
+
+        <h2 class="section-title">
+            6. Related Work and Follow-Up Work
+        </h2>
+
+        <h3 class="subsection-title">
+            6.1 Related Work
+        </h3>
+
+        <div class="body">
+
+            <p>
+                HRTF research has studied physical measurement, acoustic modeling,
+                standardized databases, personalization, and low-cost measurement
+                techniques. Gardner and Martin introduced widely used KEMAR
+                measurements, while datasets such as CIPIC and ARI expanded the
+                availability of measured HRTFs. SOFA provides a standardized format
+                for storing and exchanging spatial acoustic data.
+            </p>
+
+            <p>
+                Other work has investigated how HRTFs vary between listeners and
+                how directional responses can be measured or modeled from physical
+                characteristics. These studies provide context for the central
+                motivation of this project: a listener's own recordings can contain
+                the directional information needed to construct a personalized
+                transfer relationship.
+            </p>
+
+            <p>
+                Yang and Roy Choudhury's UNIQ system investigates personalized HRTF
+                estimation using smartphones, acoustic measurements, in-ear
+                microphones, and motion sensing. The approach in this project is
+                considerably simpler: it directly records binaural signals at
+                controlled source angles and estimates the transfer relationship
+                from those recordings using signal processing.
+            </p>
+
+        </div>
+
+        <h3 class="subsection-title">
+            6.2 Follow-Up Work
+        </h3>
+
+        <div class="body">
+
+            <p>
+                The next experiments focus on making the perception measurements
+                more systematic. This includes repeated random-clip trials,
+                comparisons between listeners, additional source angles, and
+                measurements around the back of the head where front-back
+                perception becomes more difficult.
+            </p>
+
+            <p>
+                The per-frequency experiment also provides a way to study how the
+                directional response changes across the measured frequency range.
+                The current work compares this approach with the original
+                least-squares pipeline using the same general perception-testing
+                procedure.
+            </p>
+
+            <p>
+                Other practical follow-up experiments include increasing the
+                source distance beyond one foot, checking repeated measurements
+                under the same conditions, and examining how room reflections
+                affect the reconstructed spatial cue.
+            </p>
+
+        </div>
+
+    </section>
+
+    <section id="gallery">
+
+		<h2 class="section-title">
+			7. Gallery
+		</h2>
+
+		<div class="gallery">
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					Experimental Setup
+				</div>
+				<div class="placeholder-subtitle">
+					Photo of the speaker, listener, and recording setup
+				</div>
+			</div>
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					Microphone Placement
+				</div>
+				<div class="placeholder-subtitle">
+					Close-up of the microphones positioned near the ears
+				</div>
+			</div>
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					Angle Measurement
+				</div>
+				<div class="placeholder-subtitle">
+					Physical source angle and measurement plane
+				</div>
+			</div>
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					TouchDesigner Spatial Animation
+				</div>
+				<div class="placeholder-subtitle">
+					Interactive visualization of source direction
+				</div>
+			</div>
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					Frequency-Domain Visualization
+				</div>
+				<div class="placeholder-subtitle">
+					Visualization of the estimated transfer function
+				</div>
+			</div>
+
+			<div class="gallery-placeholder">
+				<div class="placeholder-title">
+					Per-Frequency Reconstruction
+				</div>
+				<div class="placeholder-subtitle">
+					Visualization of frequency-specific filtering and reconstruction
+				</div>
+			</div>
+
+		</div>
+
+	</section>
+
+    <section id="references">
+
+        <h2 class="section-title">
+            8. References
+        </h2>
+
+        <div class="references">
+
+            <div class="reference">
+                [1] Gardner, B. and Martin, K.
+                KEMAR HRTF measurements.
+            </div>
+
+            <div class="reference">
+                [2] Brown, C. P. and Duda, R. O.
+                A structural model for binaural sound synthesis.
+            </div>
+
+            <div class="reference">
+                [3] Cheng, C. I. and Wakefield, G. H.
+                Introduction to head-related transfer functions.
+            </div>
+
+            <div class="reference">
+                [4] Algazi, V. R. et al.
+                The CIPIC HRTF database.
+            </div>
+
+            <div class="reference">
+                [5] Majdak, P. et al.
+                The ARI HRTF database.
+            </div>
+
+            <div class="reference">
+                [6] AES69.
+                Spatially Oriented Format for Acoustics.
+            </div>
+
+            <div class="reference">
+                [7] Kulkarni, A. and Colburn, H. S.
+                Influence of spectral cues on sound localization.
+            </div>
+
+            <div class="reference">
+                [8] Zotkin, D. N. et al.
+                HRTF selection using anthropometric similarity.
+            </div>
+
+            <div class="reference">
+                [9] Jin, C. et al.
+                HRTF interpolation using principal component analysis.
+            </div>
+
+            <div class="reference">
+                [10] Meshram, A. et al.
+                HRTF computation from three-dimensional head geometry.
+            </div>
+
+            <div class="reference">
+                [11] Lee, S. and Kim, H.
+                HRTF prediction from ear images.
+            </div>
+
+            <div class="reference">
+                [12] Yang, Z. and Roy Choudhury, R.
+                Personalizing Head Related Transfer Functions for Earables.
+                SIGCOMM 2021.
+            </div>
+
+            <div class="reference">
+                [13] Jayaram, V. et al.
+                HRTF estimation from binaural recordings in unconstrained
+                settings.
+            </div>
+
+            <div class="reference">
+                [14] Bruschi, V. et al.
+                Review of measurement-based, simulation-based, and
+                data-driven HRTF generation.
+            </div>
+
+        </div>
+
+    </section>
+
+    <footer>
+
+        Estimating Personalized Head-Related Transfer Functions
+        from Binaural Recordings
+
+    </footer>
+
+</div>
 
 </body>
 </html>
