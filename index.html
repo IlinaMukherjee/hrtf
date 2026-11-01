@@ -165,8 +165,11 @@
             font-size: 15px;
             font-weight: 500;
 
-            cursor: default;
+            cursor: pointer;
             user-select: none;
+            text-decoration: none;
+            font-family: inherit;
+            border: 0;
         }
 
         /* =====================================================
@@ -238,28 +241,6 @@
             color: #222222;
 
             background: #f2f2f2;
-        }
-
-        /* =====================================================
-           TL;DR
-        ====================================================== */
-
-        .tldr {
-            max-width: 1050px;
-
-            margin: 35px auto 0;
-
-            text-align: center;
-
-            font-size: 20px;
-
-            line-height: 1.6;
-
-            color: #444444;
-        }
-
-        .tldr-label {
-            font-weight: 500;
         }
 
         /* =====================================================
@@ -677,10 +658,6 @@
                 flex-wrap: wrap;
             }
 
-            .tldr {
-                font-size: 17px;
-            }
-
             .section-title {
                 font-size: 30px;
             }
@@ -728,22 +705,11 @@
 
         <div class="buttons">
 
-            <span class="button">Project</span>
-            <span class="button">Paper</span>
-            <span class="button">Code</span>
-            <span class="button">Demos</span>
-			<a href="test.html"><span class="button">Test</span></a>
-
-        </div>
-
-        <div class="tldr">
-
-            <span class="tldr-label">(TL;DR)</span>
-
-            We learn directional acoustic transformations from
-            low-cost binaural recordings and use the resulting
-            transfer functions to synthesize spatialized audio
-            for a chosen direction.
+            <button class="button" type="button"
+                onclick="alert('The paper is a work in progress. Please check back soon.')">
+                Paper
+            </button>
+            <a class="button" href="#demos">Demos</a>
 
         </div>
 
@@ -784,37 +750,28 @@
         <div class="body">
 
             <p>
-                The project started with a simple question: if sound is recorded
-                near both ears while a source is placed at a known angle, can the
-                relationship between the two recordings be learned and applied to
-                new audio?
+                This project investigates whether a low-cost recording setup can be
+                used to estimate directional acoustic transformations from binaural
+                recordings and apply them to previously unseen audio.
+                Omnidirectional lavalier microphones positioned near the ears record
+                signals produced by a phone speaker placed at known angles around the
+                listener. The recordings are aligned and processed using a
+                frequency-domain, regularized least-squares method to estimate a
+                directional transfer function. A second method estimates
+                time-domain filters from recordings of individual frequency tones.
             </p>
 
             <p>
-                The first recording attempt used Bluetooth earbuds, but the
-                approach failed because onboard noise cancellation processed the
-                signal before it could be recorded. I therefore switched to
-                inexpensive omnidirectional lavalier microphones taped near each
-                ear. A phone speaker was placed at controlled angles around the
-                listener, and the two ear signals were recorded simultaneously.
-            </p>
-
-            <p>
-                The first processing pipeline aligned the recordings, divided them
-                into short segments, and estimated a directional transfer function
-                in the frequency domain using regularized least squares. The
-                resulting transformation was then applied to new audio to generate
-                a binaural signal.
-            </p>
-
-            <p>
-                The first reconstruction produced a clear spatial effect, although
-                the perceived direction was initially flipped and later appeared
-                to have a small angular offset. This led to a broader set of
-                recordings and perception tests, including comparisons across
-                different audio clips and listeners. A second approach was then
-                developed in which individual frequency tones were recorded and
-                used to estimate a separate time-domain filter for each frequency.
+                The estimated transformations are applied to new audio to generate
+                binaural outputs, which are examined through listening tests across
+                recorded angles and audio samples. Initial results indicate that the
+                learned transformations can produce a perceptible spatial effect;
+                however, directional reversals and angular offsets show that the
+                reconstructed direction is not yet consistently aligned with the
+                physical source position. This work explores an accessible,
+                measurement-based approach to personalized spatial audio, while
+                identifying calibration and perceptual validation as areas for
+                further development.
             </p>
 
         </div>
@@ -1513,7 +1470,7 @@ OUTPUT:
 
         </div>
 
-        <h3 class="subsection-title">
+        <h3 class="subsection-title" id="demos">
             5.4 Demos
         </h3>
 
