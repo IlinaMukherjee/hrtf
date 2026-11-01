@@ -155,16 +155,6 @@
             cursor: pointer;
         }
 
-        .paper-dialog {
-            width: min(420px, calc(100vw - 32px));
-            padding: 28px 30px 24px;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            color: #333333;
-            background: #ffffff;
-            box-shadow: 0 18px 55px rgba(0, 0, 0, 0.18);
-        }
-
         .paper-dialog::backdrop {
             background: rgba(20, 20, 20, 0.42);
             backdrop-filter: blur(3px);
@@ -182,23 +172,6 @@
             color: #666666;
             font-size: 15px;
             line-height: 1.6;
-        }
-
-        .paper-dialog-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 22px;
-        }
-
-        .paper-dialog-close {
-            border: 0;
-            border-radius: 24px;
-            padding: 8px 19px;
-            background: #333333;
-            color: #ffffff;
-            font: inherit;
-            font-size: 13px;
-            cursor: pointer;
         }
 
         /* =====================================================
@@ -917,37 +890,12 @@
         </div>
 
         <div class="buttons">
-
-            <button
-                class="button"
-                type="button"
-                onclick="document.getElementById('paperDialog').showModal()"
-            >
-                Paper
-            </button>
-            <a class="button" href="#demos">Demos</a>
+<a class="button" href="#demos">Demos</a>
 
         </div>
 
     </header>
-
-    <dialog class="paper-dialog" id="paperDialog" aria-labelledby="paperDialogTitle">
-        <h2 id="paperDialogTitle">Paper in the works</h2>
-        <p>
-            I'm still putting the paper together. Check back soon!
-        </p>
-        <div class="paper-dialog-actions">
-            <button
-                class="paper-dialog-close"
-                type="button"
-                onclick="document.getElementById('paperDialog').close()"
-            >
-                Close
-            </button>
-        </div>
-    </dialog>
-
-    <section id="highlights" class="research-highlights">
+<section id="highlights" class="research-highlights">
 
         <h2 class="section-title">Research highlights</h2>
 
@@ -958,11 +906,11 @@
                     <div class="media-placeholder">
                         <span class="placeholder-kicker">Image placeholder</span>
                         <strong>Experimental setup</strong>
-                        <small>Upload as assets/experimental-setup.jpg</small>
+                        <small>Using assets/pipeline.png</small>
                     </div>
                     <img
-                        src="assets/experimental-setup.jpg"
-                        alt="Photograph of the HRTF experimental setup"
+                        src="assets/pipeline.png"
+                        alt="Experimental setup and signal-processing pipeline schematic"
                         onerror="this.style.display='none'"
                     >
                 </div>
@@ -1943,7 +1891,7 @@ OUTPUT:
     <section id="gallery">
 
 		<h2 class="section-title">
-			7. Gallery (TBD)
+			7. Gallery
 		</h2>
 
 		<div class="gallery">
